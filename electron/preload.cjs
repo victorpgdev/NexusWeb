@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+/**
+ * PRELOAD NEXUS - PONTE DE COMUNICA\u00C7\u00C3O (#10, #1, #4)
+ * Exp\u00D5e de forma segura as funcionalidades do Core para a interface React.
+ * Mant\u00E9m o contexto isolado e o sandbox ativo.
+ */
+
+contextBridge.exposeInMainWorld('nexusAPI', {
+  // --- NAVEGA\u00C7\u00C3O INTELIGENTE (#7) ---
+  resolveNavigation: (query, engine) => ipcRenderer.invoke('resolve-navigation', query, engine),
+
+  // --- SEGURAN\u00C7A (SHIELD) (#2) ---
+  getShieldStats: () => ipcRenderer.invoke('get-shield-stats'),
+
+  // --- IA SERVICE (#4) ---
+  getAISummary: (content) => ipcRenderer.invoke('ai-summary', content),
+
+  // --- PERSIST\u00C2NCIA (#11, #5) ---
+  getHistory: () => ipcRenderer.invoke('db-get-history'),
+  
+  // --- SISTEMA ---
+  getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
+  ping: (host) => ipcRenderer.invoke('ping', host),
+});
