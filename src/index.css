@@ -445,6 +445,8 @@ body {
 }
 
 .sidebar-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3c4043; }
+.close-btn { cursor: pointer; color: #9aa0a6; transition: 0.2s; }
+.close-btn:hover { color: #fff; transform: rotate(90deg); }
 
 .sidebar-header h2 { font-size: 15px; font-weight: 600; color: #fff; }
 
@@ -508,7 +510,26 @@ body {
 .color-circle.active { border-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
 .check-mark { color: #fff; font-size: 18px; font-weight: 900; }
 
-.sidebar-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #3c4043; cursor: pointer; font-size: 14px; color: #e8eaed; }
+.sidebar-option-row:hover { background: #3c4043; padding-left: 8px; border-radius: 8px; }
+
+.done-btn-settings {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 25px;
+    color: #000;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: 0.2s;
+}
+
+.done-btn-settings:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
 
 /* 6. Downloads Page Styles */
 .nexus-downloads-page {

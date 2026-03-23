@@ -457,6 +457,15 @@ const App: React.FC = () => {
                             </div>
                             <div className="sidebar-option-row"><span>Barra de ferramentas</span><ArrowRight size={16} /></div>
                             <div className="sidebar-option-row"><span>Atalhos</span><ArrowRight size={16} /></div>
+                            
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                className="done-btn-settings" 
+                                onClick={() => setShowSettings(false)}
+                                style={{ marginTop: '20px', background: browserAccent }}
+                            >
+                                Concluído
+                            </motion.button>
                         </div>
                     </motion.aside>
                 )}
