@@ -6,10 +6,10 @@ const { autoUpdater } = require('electron-updater');
 autoUpdater.autoDownload = true; 
 autoUpdater.logger = console;
 
-// #1: ARQUITETURA MODULAR (M\u00D3DULOS INDEPENDENTES)
-const { setupShield } = require('./shield.cjs');
-const { setupTabManager } = require('./tabs.cjs');
-const { setupIPCAdapters } = require('./ipc.cjs');
+// #1: ARQUITETURA MODULAR (MÓDULOS INDEPENDENTES)
+const { setupShield } = require('../core/shield_service.cjs');
+const { setupTabManager } = require('../core/tab_manager.cjs');
+const { setupIPCAdapters } = require('../core/navigation_controller.cjs');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -28,7 +28,7 @@ function createWindow() {
     title: 'Nexus Browser',
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, '../preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
@@ -193,7 +193,7 @@ app.on('web-contents-created', (event, contents) => {
     if (contents.getType() === 'webview') {
         contents.on('did-navigate', (event, url) => {
             if (url.startsWith('http')) {
-                const db = require('./db.cjs');
+                const db = require('../profile/profile_manager.cjs');
                 db.addHistory({ 
                     url, 
                     title: contents.getTitle() || url, 

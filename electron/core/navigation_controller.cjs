@@ -1,5 +1,5 @@
 const { ipcMain, shell, app } = require('electron');
-const db = require('./db.cjs');
+const db = require('../profile/profile_manager.cjs');
 
 /**
  * MEDIADOR DE COMUNICA\u00C7\u00C3O (IPC)
