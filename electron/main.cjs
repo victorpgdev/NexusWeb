@@ -111,14 +111,11 @@ function createWindow() {
 // Silent Background Updates (No more prompts for available updates)
 
 autoUpdater.on('update-downloaded', () => {
-    dialog.showMessageBox({
-        type: 'info',
-        title: 'Pronto para Instalar',
-        message: 'A atualiza\u00C7\u00C3o foi baixada e ser\u00C3¡ instalada agora.',
-        buttons: ['Reiniciar Agora']
-    }).then(result => {
-        if (result.response === 0) autoUpdater.quitAndInstall();
-    });
+    // Notify the renderer that update is ready
+    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-ready'));
+    
+    // Optional fallback dialog if window is not responding
+    console.log("[UPDATE] Downloaded and ready to install.");
 });
 
 // Initialization
@@ -132,6 +129,10 @@ app.whenReady().then(() => {
         if (app.isPackaged) {
           autoUpdater.checkForUpdatesAndNotify();
         }
+
+        ipcMain.handle('apply-update', () => {
+            autoUpdater.quitAndInstall();
+        });
 
         // --- BRAIN: SMART SEARCH SUGGESTIONS (#7) ---
         ipcMain.handle('get-suggestions', async (event, query) => {

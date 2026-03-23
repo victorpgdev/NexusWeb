@@ -597,5 +597,39 @@ body {
 .open-icon { color: var(--text-secondary); opacity: 0; transition: 0.2s; }
 .download-item-row:hover .open-icon { opacity: 1; }
 
+/* 7. Update Notification Button */
+.update-notif-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-accent);
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--bg-accent);
+    margin-right: 12px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.update-notif-btn:hover {
+    transform: scale(1.05) translateY(-1px);
+    filter: brightness(1.1);
+    box-shadow: 0 0 30px var(--bg-accent);
+}
+
+.update-notif-btn:active {
+    transform: scale(0.95);
+}
+
+.update-notif-btn svg {
+    filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
+}
+
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

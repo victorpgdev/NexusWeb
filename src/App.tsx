@@ -23,7 +23,8 @@ import {
   Download,
   DownloadCloud,
   FileText,
-  ExternalLink
+  ExternalLink,
+  Zap
 } from 'lucide-react';
 
 /**
@@ -39,6 +40,8 @@ declare global {
       onDownloadStarted: (cb: (item: any) => void) => void;
       onDownloadUpdated: (cb: (item: any) => void) => void;
       openDownload: (path: string) => Promise<void>;
+      onUpdateReady: (cb: () => void) => void;
+      applyUpdate: () => Promise<void>;
     };
   }
 }
@@ -220,12 +223,13 @@ const App: React.FC = () => {
     const [shieldBlocked, setShieldBlocked] = useState(0);
     const [downloads, setDownloads] = useState<DownloadItem[]>([]);
     const [showDownloads, setShowDownloads] = useState(false);
+    const [isUpdateReady, setIsUpdateReady] = useState(false);
 
     const SEARCH_ENGINE = 'google';
     const webviewRefs = useRef<Record<string, any>>({});
     const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
 
-    // Download Listeners
+    // Download & Update Listeners
     useEffect(() => {
         window.nexusAPI.onDownloadStarted((item) => {
             setDownloads(prev => [...prev, item]);
@@ -233,6 +237,9 @@ const App: React.FC = () => {
         });
         window.nexusAPI.onDownloadUpdated((update) => {
             setDownloads(prev => prev.map(dl => dl.id === update.id ? { ...dl, ...update } : dl));
+        });
+        window.nexusAPI.onUpdateReady(() => {
+            setIsUpdateReady(true);
         });
     }, []);
 
@@ -359,6 +366,17 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="toolbar-actions-group">
+                    {isUpdateReady && (
+                        <motion.button 
+                           initial={{ opacity: 0, scale: 0.5 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           className="update-notif-btn" 
+                           onClick={() => window.nexusAPI.applyUpdate()}
+                        >
+                            <Zap size={14} fill={browserAccent} />
+                            <span>Atualizar</span>
+                        </motion.button>
+                    )}
                     <motion.div 
                         key={shieldBlocked}
                         initial={{ scale: 1 }}

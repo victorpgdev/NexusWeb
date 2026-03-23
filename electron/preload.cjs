@@ -28,4 +28,8 @@ contextBridge.exposeInMainWorld('nexusAPI', {
   onDownloadStarted: (cb) => ipcRenderer.on('download-started', (e, item) => cb(item)),
   onDownloadUpdated: (cb) => ipcRenderer.on('download-updated', (e, item) => cb(item)),
   openDownload: (path) => ipcRenderer.invoke('open-file', path),
+
+  // --- UPDATES (#1.2.1) ---
+  onUpdateReady: (cb) => ipcRenderer.on('update-ready', () => cb()),
+  applyUpdate: () => ipcRenderer.invoke('apply-update'),
 });
