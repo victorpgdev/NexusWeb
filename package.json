@@ -33,7 +33,9 @@
       {
         "from": "dist",
         "to": "dist",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "asar": true,
@@ -56,9 +58,11 @@
     }
   },
   "dependencies": {
+    "@cliqz/adblocker-electron": "^1.34.0",
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "cross-env": "^7.0.3",
+    "cross-fetch": "^4.1.0",
     "electron-updater": "^6.8.3",
     "framer-motion": "^12.4.10",
     "lucide-react": "^0.479.0",
