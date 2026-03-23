@@ -2,19 +2,27 @@ const { app, BrowserWindow, shell, ipcMain, dialog, net } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
-// --- [NEXUS ENGINE] CHROMIUM EXTREME PERFORMANCE FLAGS ---
+// --- [NEXUS ENGINE] CHROMIUM EXTREME PERFORMANCE & SUPER LIGHTWEIGHT FLAGS ---
 // 1. Aceleração de Hardware Pesada (GPU)
 app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
-// 2. Otimização de Memória e Processamento (RAM/CPU)
+// 2. Otimização Agressiva de Memória (V8 Engine & Processos)
 app.commandLine.appendSwitch('enable-features', 'CanvasOopRasterization,Vulkan'); 
-app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess'); // Economiza RAM
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,TranslateUI,BlinkGenPropertyTrees'); 
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512 --gc-global'); // Força o V8 a fazer faxina na RAM mais cedo
+app.commandLine.appendSwitch('renderer-process-limit', '15'); // Restringe a explosão de RAM compartilhando processos entre abas
 // 3. Suavidade de Tela e Navegação
 app.commandLine.appendSwitch('enable-smooth-scrolling');
 app.commandLine.appendSwitch('disable-frame-rate-limit'); // Destrava o FPS
-// 4. Rede ultra-rápida (QUIC)
+// 4. Modo Stealth / Anti-Bloatware (Desliga lixos do Chrome Padrão)
 app.commandLine.appendSwitch('enable-quic');
+app.commandLine.appendSwitch('disable-background-networking');
+app.commandLine.appendSwitch('metrics-recording-only'); // Chega de mandar dados secundários
+app.commandLine.appendSwitch('disable-sync'); // Remove sincronização nativa pesada
+app.commandLine.appendSwitch('no-pings');
+app.commandLine.appendSwitch('disable-component-update');
+app.commandLine.appendSwitch('disable-client-side-phishing-detection'); // A segurança agora é feita pelo nosso AdBlock nativo
 
 // Configuration for auto-updates (Production only)
 autoUpdater.autoDownload = true; 
@@ -47,6 +55,8 @@ function createWindow() {
       contextIsolation: true,
       sandbox: true,
       webviewTag: true,
+      backgroundThrottling: true, // Força as abas em 2º plano a congelarem totalmente (0% CPU)
+      spellcheck: false // Corta uso desnecessário de CPU ao digitar
     },
   });
 
