@@ -3,7 +3,7 @@ const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
 // Configuration for auto-updates (Production only)
-autoUpdater.autoDownload = false; // We ask the user before downloading large updates
+autoUpdater.autoDownload = true; 
 autoUpdater.logger = console;
 
 // #1: ARQUITETURA MODULAR (M\u00D3DULOS INDEPENDENTES)
@@ -108,17 +108,7 @@ function createWindow() {
   });
 }
 
-// Update Listeners
-autoUpdater.on('update-available', (info) => {
-    dialog.showMessageBox({
-        type: 'info',
-        title: 'Atualiza\u00C7\u00C3o Dispon\u00C3vel',
-        message: `Uma nova vers\u00C3o (${info.version}) do Nexus Browser est\u00C3¡ dispon\u00C3vel. Deseja baixar agora?`,
-        buttons: ['Sim', 'Depois']
-    }).then(result => {
-        if (result.response === 0) autoUpdater.downloadUpdate();
-    });
-});
+// Silent Background Updates (No more prompts for available updates)
 
 autoUpdater.on('update-downloaded', () => {
     dialog.showMessageBox({

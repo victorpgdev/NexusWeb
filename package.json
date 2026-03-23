@@ -1,7 +1,11 @@
 {
   "name": "nexus-browser",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/victorpgdev/NexusWeb"
+  },
   "description": "NEXUS: The High-Performance Secure Browser",
   "author": "Victor Hugo",
   "main": "electron/main.cjs",
