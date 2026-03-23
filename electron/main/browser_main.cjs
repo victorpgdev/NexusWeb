@@ -2,6 +2,20 @@ const { app, BrowserWindow, shell, ipcMain, dialog, net } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
+// --- [NEXUS ENGINE] CHROMIUM EXTREME PERFORMANCE FLAGS ---
+// 1. Aceleração de Hardware Pesada (GPU)
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+// 2. Otimização de Memória e Processamento (RAM/CPU)
+app.commandLine.appendSwitch('enable-features', 'CanvasOopRasterization,Vulkan'); 
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess'); // Economiza RAM
+// 3. Suavidade de Tela e Navegação
+app.commandLine.appendSwitch('enable-smooth-scrolling');
+app.commandLine.appendSwitch('disable-frame-rate-limit'); // Destrava o FPS
+// 4. Rede ultra-rápida (QUIC)
+app.commandLine.appendSwitch('enable-quic');
+
 // Configuration for auto-updates (Production only)
 autoUpdater.autoDownload = true; 
 autoUpdater.logger = console;
@@ -150,8 +164,22 @@ app.whenReady().then(() => {
             autoUpdater.quitAndInstall();
         });
 
-        ipcMain.handle('check-for-updates', () => {
-            return autoUpdater.checkForUpdatesAndNotify();
+        ipcMain.handle('check-for-updates', async () => {
+            try {
+                if (!app.isPackaged) {
+                    // Prevenir bug de tela travada no 'checking' no modo de desenvolvimento
+                    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'checking'));
+                    setTimeout(() => {
+                        BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'latest'));
+                    }, 1500);
+                    return null;
+                }
+                return await autoUpdater.checkForUpdatesAndNotify();
+            } catch (err) {
+                console.error("[UPDATE ERROR] ", err);
+                BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'error'));
+                return null;
+            }
         });
 
         // --- BRAIN: SMART SEARCH SUGGESTIONS (#7) ---
