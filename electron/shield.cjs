@@ -1,56 +1,71 @@
 const { session, ipcMain } = require('electron');
 
 /**
- * M\u00D3DULO DE SEGURAN\u00C7A (SHIELD) - V2
- * 1. Intercepta requisi\u00E7\u00F5es HTTP/HTTPS.
- * 2. Bloqueia Ads e Trackers (EasyList-style).
- * 3. Sanitiza URLs de navega\u00E7\u00E3o e refor\u00C7a HTTPS.
+ * M\u00D3DULO DE SEGURAN\u00C7A (SHIELD) - V3 (Brave-Inspired)
  */
 
-const SHIELD_TIMEOUT = 100; // Timeout m\u00E1ximo agressivo de 100ms
+const SHIELD_TIMEOUT = 100;
 let blockedCount = 0;
 
 const adDomains = [
-    'google-analytics.com', 'doubleclick.net', 'facebook.net', 'ads.com',
-    'adnxs.com', 'taboola.com', 'api.mixpanel.com', 'hotjar.com',
-    'advertising.com', 'amazon-adsystem.com', 'quantserve.com',
-    'outbrain.com', 'criteo.com', 'pubmatic.com', 'rubiconproject.com',
-    'openx.net', 'yieldmo.com', 'adtech.com', 'smartadserver.com',
-    'moatads.com', 'scorecardresearch.com', 'serving-sys.com'
+    // Core Tracking
+    'google-analytics.com', 'analytics.google.com', 'googletagmanager.com', 'google-analytics.l.google.com',
+    'doubleclick.net', 'googleads.g.doubleclick.net', 'facebook.net', 'facebook.com/tr',
+    'hotjar.com', 'api.mixpanel.com', 'quantserve.com', 'outbrain.com', 'criteo.com',
+    'scorecardresearch.com', 'serving-sys.com', 'adnxs.com', 'taboola.com',
+    
+    // Telemetry & Behavior
+    'telemetry.microsoft.com', 'vortex.data.microsoft.com', 'browser.pipe.aria.microsoft.com',
+    'stats.g.doubleclick.net', 'pixel.facebook.com', 'connect.facebook.net',
+    
+    // Obvious Ads
+    'ads.com', 'advertising.com', 'amazon-adsystem.com', 'pubmatic.com', 'rubiconproject.com',
+    'openx.net', 'smartadserver.com', 'adtech.com', 'moatads.com'
 ];
 
 function setupShield(browserSession = session.defaultSession) {
-    // 1. Filtragem de Rede (Ad-Block & Privacy)
+    // 1. BRAVE SHIELD: Bloqueio agressivo de Ad/Trackers e Pings
     browserSession.webRequest.onBeforeRequest({ urls: ["<all_urls>"] }, (details, callback) => {
         const url = new URL(details.url);
         
-        // Skip local and core nexus requests
+        // Ignorar local e nexus core
         if (url.hostname.includes('localhost') || url.protocol === 'nexus:') {
             return callback({ cancel: false });
         }
 
-        const checkPromise = (async () => {
-            // Bloqueio de dom\u00EDnios de an\u00FAncios conhecidos
-            if (adDomains.some(domain => url.hostname.includes(domain))) {
-                blockedCount++;
-                // Notify UI via broadcast (simulated/simplified)
-                return { cancel: true };
-            }
+        // Bloquear <a ping> (Rastreio de cliques nativo do navegador)
+        if (details.resourceType === 'ping') {
+            blockedCount++;
+            return callback({ cancel: true });
+        }
 
-            // For\u00E7ar HTTPS para navega\u00E7\u00E3o externa
-            if (url.protocol === 'http:') {
-                return { redirectURL: details.url.replace('http:', 'https:') };
-            }
+        const isBlocked = adDomains.some(domain => url.hostname.includes(domain));
+        if (isBlocked) {
+            blockedCount++;
+            return callback({ cancel: true });
+        }
 
-            return { cancel: false };
-        })();
+        // For\u00E7ar HTTPS
+        if (url.protocol === 'http:') {
+            return callback({ redirectURL: details.url.replace('http:', 'https:') });
+        }
 
-        // Fail-safe logic
-        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ cancel: false }), SHIELD_TIMEOUT));
+        callback({ cancel: false });
+    });
+
+    // 2. PRIVACY HEADERS: Limpeza de rastreio em cabe\u00E7alhos (Estilo Brave)
+    browserSession.webRequest.onBeforeSendHeaders({ urls: ["<all_urls>"] }, (details, callback) => {
+        const headers = details.requestHeaders;
         
-        Promise.race([checkPromise, timeoutPromise])
-            .then(result => callback(result))
-            .catch(() => callback({ cancel: false }));
+        // Bloquear x-client-data (Enviado pelo Chrome/Edge para identificar vers\u00E3o/experimentos)
+        delete headers['X-Client-Data'];
+        
+        // Reduzir informa\u00E7\u00F5es de Referrer para sites de terceiros
+        if (details.resourceType === 'subFrame' || details.resourceType === 'image') {
+            headers['Referer'] = new URL(details.url).origin;
+        }
+
+        callback({ requestHeaders: headers });
     });
 
     // Handle Stats via IPC
@@ -59,7 +74,7 @@ function setupShield(browserSession = session.defaultSession) {
         isShieldActive: true
     }));
 
-    // 2. Anti-Fingerprint User-Agent (Updated to latest Chrome)
+    // 3. ANTI-FINGERPRINTING: User-Agent Gen\u00E9rico Est\u00E1vel
     browserSession.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36");
 }
 

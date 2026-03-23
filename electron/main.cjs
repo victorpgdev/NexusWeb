@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, dialog, net } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
@@ -95,6 +95,27 @@ app.whenReady().then(() => {
         if (app.isPackaged) {
           autoUpdater.checkForUpdatesAndNotify();
         }
+
+        // --- BRAIN: SMART SEARCH SUGGESTIONS (#7) ---
+        ipcMain.handle('get-suggestions', async (event, query) => {
+            if (!query || query.length < 2) return [];
+            return new Promise((resolve) => {
+                const request = net.request(`https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`);
+                request.on('response', (response) => {
+                    let data = '';
+                    response.on('data', (chunk) => { data += chunk; });
+                    response.on('end', () => {
+                        try {
+                            const json = JSON.parse(data);
+                            resolve(json[1] || []); // Index 1 contains suggestion strings
+                        } catch (e) { resolve([]); }
+                    });
+                });
+                request.on('error', () => resolve([]));
+                request.end();
+            });
+        });
+
     } catch (e) {
         console.error("[NEXUS BOOT FAILED] ", e);
     }

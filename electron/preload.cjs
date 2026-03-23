@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('nexusAPI', {
 
   // --- SEGURAN\u00C7A (SHIELD) (#2) ---
   getShieldStats: () => ipcRenderer.invoke('get-shield-stats'),
+  getSuggestions: (query) => ipcRenderer.invoke('get-suggestions', query),
 
   // --- IA SERVICE (#4) ---
   getAISummary: (content) => ipcRenderer.invoke('ai-summary', content),

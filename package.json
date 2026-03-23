@@ -1,7 +1,7 @@
 {
   "name": "nexus-browser",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "NEXUS: The High-Performance Secure Browser",
   "author": "Victor Hugo",
   "main": "electron/main.cjs",

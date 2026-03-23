@@ -30,8 +30,8 @@ import {
 declare global {
   interface Window {
     nexusAPI: {
-      resolveNavigation: (q: string, engine?: string) => Promise<{ action: string, url: string }>;
       getShieldStats?: () => Promise<{ blockedCount: number, isShieldActive: boolean }>;
+      getSuggestions: (query: string) => Promise<string[]>;
     };
   }
 }
@@ -78,13 +78,21 @@ const OmniboxDropdown: React.FC<{
   onSelect: (q: string, engine?: string) => void,
   accent: string
 }> = ({ query, onSelect }) => {
-  // Use derived state to avoid React 19 lint warning about cascading renders
-  const suggestions = useMemo(() => {
-    if (!query.trim()) return [];
-    return [`${query}`, `${query} download`, `${query} pre\u00C7\u00C3o`, `${query} not\u00EDcias`, `${query} como fazer`];
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (query.trim().length >= 2) {
+        const results = await window.nexusAPI.getSuggestions(query);
+        setSuggestions(results.slice(0, 6));
+      } else {
+        setSuggestions([]);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
   }, [query]);
 
-  if (!query.trim()) return null;
+  if (!query.trim() || suggestions.length === 0) return null;
   
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="omnibox-dropdown shadow-2xl">
@@ -214,20 +222,25 @@ const App: React.FC = () => {
     const setupWebview = (id: string, webview: HTMLWebViewElement | null) => {
         if (!webview || webviewRefs.current[id]) return;
         webviewRefs.current[id] = webview;
-        webview.addEventListener('did-stop-loading', async () => {
-             // Cast to any to access Electron-specific webview properties in TS
+
+        const updateState = () => {
             const wv = webview as any;
+            if (!wv.getURL) return;
             const url = wv.getURL();
             updateTab(id, { 
-              isLoading: false, 
-              progress: 100, 
+              isLoading: wv.isLoading(), 
               title: wv.getTitle() || 'Nexus Tab', 
               url, 
               canGoBack: wv.canGoBack(), 
               canGoForward: wv.canGoForward() 
             });
             if (id === activeTabId) setInputValue(url);
-        });
+        };
+
+        webview.addEventListener('did-stop-loading', updateState);
+        webview.addEventListener('did-navigate', updateState);
+        webview.addEventListener('did-navigate-in-page', updateState);
+        webview.addEventListener('did-start-loading', () => updateTab(id, { isLoading: true }));
     };
 
     return (
@@ -272,10 +285,16 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="toolbar-actions-group">
-                    <div className="shield-stat-badge">
-                        <ShieldCheck size={16} style={{ color: '#ff531b' }} />
+                    <motion.div 
+                        key={shieldBlocked}
+                        initial={{ scale: 1 }}
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ duration: 0.3 }}
+                        className="shield-stat-badge"
+                    >
+                        <ShieldCheck size={16} />
                         <span>{shieldBlocked}</span>
-                    </div>
+                    </motion.div>
                     <div className="user-avatar-stub">VH</div>
                     <button className="toolbar-btn" onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}><MenuIcon size={18} /></button>
                 </div>
