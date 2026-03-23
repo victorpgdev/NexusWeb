@@ -32,7 +32,7 @@ export const NexusSearchPage: React.FC<{
                     <AnimatePresence>
                         {showSuggestions && (
                             <div className="ntp-dropdown-pos" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100 }}>
-                                <OmniboxDropdown query={q} accent={accent} onSelect={(val, engine) => { setQ(val); onSearch(val, engine); setShowSuggestions(false); }} />
+                                <OmniboxDropdown query={q} accent={accent} onSelect={(val, engine) => { setQ(val); onSearch(val, engine); setShowSuggestions(false); }} onClear={() => { setQ(''); setShowSuggestions(false); }} />
                             </div>
                         )}
                     </AnimatePresence>

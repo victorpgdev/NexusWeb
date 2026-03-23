@@ -273,7 +273,7 @@ const App: React.FC = () => {
                         </button>
                     </form>
                     <AnimatePresence>
-                      {showDropdown && <OmniboxDropdown query={inputValue} accent={browserAccent} onSelect={(q, e) => { setInputValue(q); handleNavigate(undefined, q, e); }} />}
+                      {showDropdown && <OmniboxDropdown query={inputValue} accent={browserAccent} onSelect={(q, e) => { setInputValue(q); handleNavigate(undefined, q, e); }} onClear={() => { setInputValue(''); setShowDropdown(false); }} />}
                     </AnimatePresence>
                 </div>
 
@@ -328,11 +328,16 @@ const App: React.FC = () => {
                         exit={{ opacity: 0, y: -20 }}
                         className={`update-status-banner ${updateStatus}`}
                     >
-                        {updateStatus === 'checking' && <>🔄 Buscando atualizações...</>}
-                        {updateStatus === 'latest' && <>✅ Você já está na versão mais recente!</>}
-                        {updateStatus === 'available' && <>📦 Nova atualização encontrada!</>}
-                        {updateStatus === 'ready' && <>🚀 Atualização pronta para instalar!</>}
-                        {updateStatus === 'error' && <>⚠️ Erro ao buscar atualizações.</>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {updateStatus === 'checking' && <span>🔄 Buscando atualizações...</span>}
+                            {updateStatus === 'latest' && <span>✅ Você já está na versão mais recente!</span>}
+                            {updateStatus === 'available' && <span>📦 Nova atualização encontrada!</span>}
+                            {updateStatus === 'ready' && <span>🚀 Atualização pronta para instalar!</span>}
+                            {updateStatus === 'error' && <span>⚠️ Erro ao buscar atualizações.</span>}
+                        </div>
+                        <button onClick={() => setUpdateStatus('idle')} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex' }}>
+                            <X size={16} />
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
