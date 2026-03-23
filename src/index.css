@@ -631,5 +631,56 @@ body {
     filter: drop-shadow(0 0 2px rgba(0,0,0,0.5));
 }
 
+/* 8. Omnibox & Search Suggestions */
+.omnibox-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: #202124;
+    border: 1px solid #3c4043;
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 2000;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+
+.dropdown-section { padding: 8px 0; }
+
+.suggestion-item {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    color: #e8eaed;
+    transition: 0.1s;
+}
+
+.suggestion-item:hover { background: #3c4043; }
+.suggestion-item .icon { color: #9aa0a6; }
+.suggestion-item span { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.dropdown-divider { height: 1px; background: #3c4043; margin: 8px 0; }
+
+.engine-options-row { padding: 8px 16px; display: flex; flex-direction: column; gap: 8px; }
+.engine-options-row .label { font-size: 11px; font-weight: 700; color: #9aa0a6; text-transform: uppercase; }
+.engine-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.engine-btns button {
+    background: #292a2d;
+    border: 1px solid #3c4043;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.engine-btns button:hover { background: #3c4043; border-color: var(--bg-accent); }
+
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
