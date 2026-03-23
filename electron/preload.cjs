@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('nexusAPI', {
 
   // --- UPDATES (#1.2.1) ---
   onUpdateReady: (cb) => ipcRenderer.on('update-ready', () => cb()),
+  onUpdateStatus: (cb) => ipcRenderer.on('update-status', (event, status) => cb(status)),
   applyUpdate: () => ipcRenderer.invoke('apply-update'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
 

@@ -47,6 +47,7 @@ declare global {
       onDownloadUpdated: (cb: (item: any) => void) => void;
       openDownload: (path: string) => Promise<void>;
       onUpdateReady: (cb: () => void) => void;
+      onUpdateStatus: (cb: (status: any) => void) => void;
       applyUpdate: () => Promise<void>;
       checkForUpdates: () => Promise<any>;
       getHistory: () => Promise<any[]>;
@@ -412,6 +413,9 @@ const App: React.FC = () => {
     const [taskMetrics, setTaskMetrics] = useState<any[]>([]);
     const [showDiagnostics, setShowDiagnostics] = useState(false);
 
+    // --- UPDATE FEEDBACK ---
+    const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'latest' | 'available' | 'error' | 'ready'>('idle');
+
     const SEARCH_ENGINE = 'google';
     const webviewRefs = useRef<Record<string, any>>({});
     const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
@@ -437,6 +441,13 @@ const App: React.FC = () => {
         });
         window.nexusAPI.onUpdateReady(() => {
             setIsUpdateReady(true);
+            setUpdateStatus('ready');
+        });
+        window.nexusAPI.onUpdateStatus((status: any) => {
+            setUpdateStatus(status);
+            if (status === 'latest' || status === 'error') {
+                setTimeout(() => setUpdateStatus('idle'), 5000); // Auto-hide after 5s
+            }
         });
         // Initial load
         refreshHistory();
@@ -630,12 +641,34 @@ const App: React.FC = () => {
                     onShowDownloads={() => { setShowDownloads(true); setShowMenu(false); }} 
                     onShowHistory={() => { setShowHistory(true); setShowMenu(false); refreshHistory(); }}
                     onShowBookmarks={() => { setShowBookmarks(true); setShowMenu(false); refreshBookmarks(); }}
-                    onCheckUpdate={() => { window.nexusAPI.checkForUpdates(); setShowMenu(false); }} 
+                    onCheckUpdate={() => { 
+                        setUpdateStatus('checking');
+                        window.nexusAPI.checkForUpdates(); 
+                        setShowMenu(false); 
+                    }} 
                     onDevTools={() => { window.nexusAPI.toggleDevTools(); setShowMenu(false); }}
                     onZoom={(f) => setZoomFactor(prev => prev + f)} 
                     zoomFactor={zoomFactor} 
                 />}</AnimatePresence>
             </nav>
+
+            {/* --- UPDATE NOTIFICATION BANNER --- */}
+            <AnimatePresence>
+                {updateStatus !== 'idle' && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className={`update-status-banner ${updateStatus}`}
+                    >
+                        {updateStatus === 'checking' && <>🔄 Buscando atualizações...</>}
+                        {updateStatus === 'latest' && <>✅ Você já está na versão mais recente!</>}
+                        {updateStatus === 'available' && <>📦 Nova atualização encontrada!</>}
+                        {updateStatus === 'ready' && <>🚀 Atualização pronta para instalar!</>}
+                        {updateStatus === 'error' && <>⚠️ Erro ao buscar atualizações.</>}
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <main className="browser-viewport">
                 {showDownloads ? (

@@ -110,11 +110,27 @@ function createWindow() {
 
 // Silent Background Updates (No more prompts for available updates)
 
+autoUpdater.on('checking-for-update', () => {
+    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'checking'));
+});
+
+autoUpdater.on('update-available', () => {
+    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'available'));
+});
+
+autoUpdater.on('update-not-available', () => {
+    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'latest'));
+});
+
+autoUpdater.on('error', (err) => {
+    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'error'));
+    console.error("[UPDATE ERROR] ", err);
+});
+
 autoUpdater.on('update-downloaded', () => {
     // Notify the renderer that update is ready
     BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-ready'));
-    
-    // Optional fallback dialog if window is not responding
+    BrowserWindow.getAllWindows().forEach(w => w.webContents.send('update-status', 'ready'));
     console.log("[UPDATE] Downloaded and ready to install.");
 });
 
