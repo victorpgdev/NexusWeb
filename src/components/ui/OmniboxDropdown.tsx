@@ -21,15 +21,15 @@ export const OmniboxDropdown: React.FC<{
     return () => clearTimeout(timer);
   }, [query]);
 
-  if (!query.trim() || suggestions.length === 0) return null;
+  if (!query.trim()) return null;
   
   return (
     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="omnibox-dropdown shadow-2xl">
       <div className="dropdown-section">
-        {suggestions.map((s, i) => (
+        {suggestions.length > 0 && suggestions.map((s, i) => (
           <div key={i} className="suggestion-item" onClick={() => onSelect(s)}><Search size={14} className="icon" /><span>{s}</span></div>
         ))}
-        <div className="dropdown-divider" />
+        {suggestions.length > 0 && <div className="dropdown-divider" />}
         <div className="engine-options-row">
             <span className="label">Pesquisar com:</span>
             <div className="engine-btns">

@@ -186,7 +186,7 @@ app.whenReady().then(() => {
         ipcMain.handle('get-suggestions', async (event, query) => {
             if (!query || query.length < 2) return [];
             return new Promise((resolve) => {
-                const request = net.request(`https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}`);
+                const request = net.request(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`);
                 request.on('response', (response) => {
                     let data = '';
                     response.on('data', (chunk) => { data += chunk; });
