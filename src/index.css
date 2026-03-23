@@ -510,5 +510,92 @@ body {
 
 .sidebar-option-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid #3c4043; cursor: pointer; font-size: 14px; color: #e8eaed; }
 
+/* 6. Downloads Page Styles */
+.nexus-downloads-page {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 0%, #1a1a1a 0%, #050505 100%);
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+}
+
+.downloads-header {
+    padding: 30px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.downloads-header .header-left { display: flex; align-items: center; gap: 20px; }
+.downloads-header h1 { font-size: 24px; font-weight: 800; }
+
+.back-to-home {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: 0.2s;
+}
+.back-to-home:hover { color: #fff; transform: rotate(90deg); }
+
+.downloads-list {
+    flex: 1;
+    padding: 20px 60px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.empty-downloads {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    gap: 20px;
+}
+
+.download-item-row {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.download-item-row:hover { background: rgba(255, 255, 255, 0.06); border-color: var(--bg-accent); }
+
+.download-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.file-name { font-size: 14px; font-weight: 700; color: #fff; }
+.dl-url-meta { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+
+.dl-progress-container {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 3px;
+    position: relative;
+    margin: 8px 0;
+}
+
+.dl-progress-bar { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+.dl-perc { position: absolute; right: 0; top: -18px; font-size: 10px; font-weight: 800; color: var(--bg-accent); }
+
+.dl-state { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.dl-state.completed { color: #00ffca; }
+.dl-state.progressing { color: var(--bg-accent); }
+.dl-state.failed { color: #ff531b; }
+
+.open-icon { color: var(--text-secondary); opacity: 0; transition: 0.2s; }
+.download-item-row:hover .open-icon { opacity: 1; }
+
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

@@ -23,4 +23,9 @@ contextBridge.exposeInMainWorld('nexusAPI', {
   // --- SISTEMA ---
   getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
   ping: (host) => ipcRenderer.invoke('ping', host),
+
+  // --- DOWNLOADS (#1767) ---
+  onDownloadStarted: (cb) => ipcRenderer.on('download-started', (e, item) => cb(item)),
+  onDownloadUpdated: (cb) => ipcRenderer.on('download-updated', (e, item) => cb(item)),
+  openDownload: (path) => ipcRenderer.invoke('open-file', path),
 });

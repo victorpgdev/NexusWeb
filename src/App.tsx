@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Globe, 
@@ -18,9 +18,12 @@ import {
   Minus,
   LogOut,
   PlusCircle,
-  EyeOff,
   Edit2,
-  ShieldCheck
+  ShieldCheck,
+  Download,
+  DownloadCloud,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 
 /**
@@ -30,10 +33,24 @@ import {
 declare global {
   interface Window {
     nexusAPI: {
+      resolveNavigation: (q: string, engine?: string) => Promise<{ action: string, url: string }>;
       getShieldStats?: () => Promise<{ blockedCount: number, isShieldActive: boolean }>;
       getSuggestions: (query: string) => Promise<string[]>;
+      onDownloadStarted: (cb: (item: any) => void) => void;
+      onDownloadUpdated: (cb: (item: any) => void) => void;
+      openDownload: (path: string) => Promise<void>;
     };
   }
+}
+
+interface DownloadItem {
+  id: string;
+  name: string;
+  url: string;
+  total: number;
+  received: number;
+  state: 'progressing' | 'completed' | 'failed' | 'interrupted';
+  path: string;
 }
 
 interface Tab {
@@ -118,15 +135,16 @@ const OmniboxDropdown: React.FC<{
 const ChromeMenu: React.FC<{ 
     onAddTab: () => void, 
     onShowSettings: () => void,
+    onShowDownloads: () => void,
     onZoom: (factor: number) => void,
     zoomFactor: number 
-}> = ({ onAddTab, onShowSettings, onZoom, zoomFactor }) => (
+}> = ({ onAddTab, onShowSettings, onShowDownloads, onZoom, zoomFactor }) => (
     <motion.div initial={{ opacity: 0, scale: 0.98, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="nexus-chrome-menu">
         <div className="menu-banner">Defina o Nexus como seu navegador padr\u00E3o</div>
         <div className="menu-group">
             <div className="menu-item" onClick={onAddTab}><PlusCircle size={16} /> <span>Nova guia</span> <span className="shortcut">Ctrl+T</span></div>
             <div className="menu-item"><Plus size={16} /> <span>Nova janela</span> <span className="shortcut">Ctrl+N</span></div>
-            <div className="menu-item"><EyeOff size={16} /> <span>Nova janela an\u00F4nima</span> <span className="shortcut">Ctrl+Shift+N</span></div>
+            <div className="menu-item" onClick={onShowDownloads}><Download size={16} /> <span>Downloads</span> <span className="shortcut">Ctrl+J</span></div>
         </div>
         <div className="menu-divider" />
         <div className="menu-zoom-bar">
@@ -146,6 +164,49 @@ const ChromeMenu: React.FC<{
     </motion.div>
 );
 
+const DownloadsPage: React.FC<{ 
+    downloads: DownloadItem[], 
+    onOpen: (path: string) => void,
+    onBack: () => void,
+    accent: string 
+}> = ({ downloads, onOpen, onBack, accent }) => (
+    <div className="nexus-downloads-page">
+        <header className="downloads-header">
+            <div className="header-left">
+                <DownloadCloud size={24} style={{ color: accent }} />
+                <h1>Downloads</h1>
+            </div>
+            <button className="back-to-home" onClick={onBack}><X size={20} /></button>
+        </header>
+        <div className="downloads-list">
+            {downloads.length === 0 ? (
+                <div className="empty-downloads">
+                    <Download size={48} className="icon-empty" />
+                    <p>Nenhum download encontrado</p>
+                </div>
+            ) : (
+                downloads.map(dl => (
+                    <div key={dl.id} className="download-item-row" onClick={() => dl.state === 'completed' && onOpen(dl.path)}>
+                        <FileText size={20} className="file-icon" />
+                        <div className="download-info">
+                            <span className="file-name">{dl.name}</span>
+                            <div className="dl-url-meta">{dl.url}</div>
+                            {dl.state === 'progressing' && (
+                                <div className="dl-progress-container">
+                                    <div className="dl-progress-bar" style={{ width: `${(dl.received / dl.total) * 100}%`, backgroundColor: accent }}></div>
+                                    <span className="dl-perc">{Math.round((dl.received / dl.total) * 100)}%</span>
+                                </div>
+                            )}
+                            <span className={`dl-state ${dl.state}`}>{dl.state === 'completed' ? 'Conclu\u00C3\u00ADdo' : dl.state === 'progressing' ? 'Baixando...' : 'Falhou'}</span>
+                        </div>
+                        {dl.state === 'completed' && <ExternalLink size={16} className="open-icon" />}
+                    </div>
+                ))
+            ).reverse()}
+        </div>
+    </div>
+);
+
 const App: React.FC = () => {
     const [tabs, setTabs] = useState<Tab[]>([{ id: '1', url: 'nexus:newtab', title: 'Nova Guia', isLoading: false, canGoBack: false, canGoForward: false, progress: 0 }]);
     const [activeTabId, setActiveTabId] = useState('1');
@@ -157,10 +218,23 @@ const App: React.FC = () => {
     const [themeMode, setThemeMode] = useState<'claro' | 'escuro' | 'dispositivo'>('escuro');
     const [zoomFactor, setZoomFactor] = useState(1);
     const [shieldBlocked, setShieldBlocked] = useState(0);
+    const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+    const [showDownloads, setShowDownloads] = useState(false);
 
     const SEARCH_ENGINE = 'google';
     const webviewRefs = useRef<Record<string, any>>({});
     const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+
+    // Download Listeners
+    useEffect(() => {
+        window.nexusAPI.onDownloadStarted((item) => {
+            setDownloads(prev => [...prev, item]);
+            setShowDownloads(true);
+        });
+        window.nexusAPI.onDownloadUpdated((update) => {
+            setDownloads(prev => prev.map(dl => dl.id === update.id ? { ...dl, ...update } : dl));
+        });
+    }, []);
 
     useEffect(() => {
         document.documentElement.style.setProperty('--bg-accent', browserAccent);
@@ -298,19 +372,23 @@ const App: React.FC = () => {
                     <div className="user-avatar-stub">VH</div>
                     <button className="toolbar-btn" onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}><MenuIcon size={18} /></button>
                 </div>
-                <AnimatePresence>{showMenu && <ChromeMenu onAddTab={addTab} onShowSettings={() => setShowSettings(true)} onZoom={(f) => setZoomFactor(prev => prev + f)} zoomFactor={zoomFactor} />}</AnimatePresence>
+                <AnimatePresence>{showMenu && <ChromeMenu onAddTab={addTab} onShowSettings={() => setShowSettings(true)} onShowDownloads={() => setShowDownloads(true)} onZoom={(f) => setZoomFactor(prev => prev + f)} zoomFactor={zoomFactor} />}</AnimatePresence>
             </nav>
 
             <main className="browser-viewport">
-                {tabs.map(tab => (
-                    <div key={tab.id} style={{ display: tab.id === activeTabId ? 'block' : 'none', width: '100%', height: '100%' }}>
-                        {tab.url === 'nexus:newtab' ? (
-                            <NexusSearchPage accent={browserAccent} searchEngine={SEARCH_ENGINE} onSearch={(q) => handleNavigate(undefined, q)} onShowSettings={() => setShowSettings(true)} />
-                        ) : (
-                            <webview ref={(el) => setupWebview(tab.id, el as HTMLWebViewElement)} src={tab.url} style={{ width: '100%', height: '100%' }} partition="persist:browser-main" className="webview-content" />
-                        )}
-                    </div>
-                ))}
+                {showDownloads ? (
+                    <DownloadsPage accent={browserAccent} downloads={downloads} onBack={() => setShowDownloads(false)} onOpen={(p) => window.nexusAPI.openDownload(p)} />
+                ) : (
+                    tabs.map(tab => (
+                        <div key={tab.id} style={{ display: tab.id === activeTabId ? 'block' : 'none', width: '100%', height: '100%' }}>
+                            {tab.url === 'nexus:newtab' ? (
+                                <NexusSearchPage accent={browserAccent} searchEngine={SEARCH_ENGINE} onSearch={(q) => handleNavigate(undefined, q)} onShowSettings={() => setShowSettings(true)} />
+                            ) : (
+                                <webview ref={(el) => setupWebview(tab.id, el as HTMLWebViewElement)} src={tab.url} style={{ width: '100%', height: '100%' }} partition="persist:browser-main" className="webview-content" />
+                            )}
+                        </div>
+                    ))
+                )}
             </main>
 
             <AnimatePresence>

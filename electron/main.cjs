@@ -59,6 +59,53 @@ function createWindow() {
   win.once('ready-to-show', () => win.show());
   setupShield();
   win.setMenu(null); 
+
+  // --- DOWNLOAD MANAGER (#1767) ---
+  session.defaultSession.on('will-download', (event, item, webContents) => {
+    const downloadId = Math.random().toString(36).substr(2, 9);
+    const fileName = item.getFilename();
+    const url = item.getURL();
+    const totalBytes = item.getTotalBytes();
+    
+    const downloadItem = {
+      id: downloadId,
+      name: fileName,
+      url: url,
+      total: totalBytes,
+      received: 0,
+      state: 'progressing',
+      path: ''
+    };
+
+    // Store in global or notify win
+    webContents.send('download-started', downloadItem);
+
+    item.on('updated', (event, state) => {
+      if (state === 'interrupted') {
+        webContents.send('download-updated', { id: downloadId, state: 'interrupted' });
+      } else if (state === 'progressing') {
+        if (webContents.isDestroyed()) return;
+        webContents.send('download-updated', { 
+            id: downloadId, 
+            received: item.getReceivedBytes(),
+            state: 'progressing' 
+        });
+      }
+    });
+
+    item.once('done', (event, state) => {
+      if (state === 'completed') {
+        webContents.send('download-updated', { 
+            id: downloadId, 
+            state: 'completed', 
+            path: item.getSavePath(),
+            received: totalBytes 
+        });
+      } else {
+        webContents.send('download-updated', { id: downloadId, state: 'failed' });
+      }
+    });
+  });
 }
 
 // Update Listeners
@@ -114,6 +161,11 @@ app.whenReady().then(() => {
                 request.on('error', () => resolve([]));
                 request.end();
             });
+        });
+
+        // --- DOWNLOAD ACTIONS ---
+        ipcMain.handle('open-file', (event, path) => {
+            if (path) shell.openPath(path);
         });
 
     } catch (e) {
