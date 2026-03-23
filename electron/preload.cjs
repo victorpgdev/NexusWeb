@@ -32,4 +32,5 @@ contextBridge.exposeInMainWorld('nexusAPI', {
   // --- UPDATES (#1.2.1) ---
   onUpdateReady: (cb) => ipcRenderer.on('update-ready', () => cb()),
   applyUpdate: () => ipcRenderer.invoke('apply-update'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
 });

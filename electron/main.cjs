@@ -134,6 +134,10 @@ app.whenReady().then(() => {
             autoUpdater.quitAndInstall();
         });
 
+        ipcMain.handle('check-for-updates', () => {
+            return autoUpdater.checkForUpdatesAndNotify();
+        });
+
         // --- BRAIN: SMART SEARCH SUGGESTIONS (#7) ---
         ipcMain.handle('get-suggestions', async (event, query) => {
             if (!query || query.length < 2) return [];

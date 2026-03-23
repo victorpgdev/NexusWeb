@@ -42,6 +42,7 @@ declare global {
       openDownload: (path: string) => Promise<void>;
       onUpdateReady: (cb: () => void) => void;
       applyUpdate: () => Promise<void>;
+      checkForUpdates: () => Promise<any>;
     };
   }
 }
@@ -155,11 +156,12 @@ const ChromeMenu: React.FC<{
     onAddTab: () => void, 
     onShowSettings: () => void,
     onShowDownloads: () => void,
+    onCheckUpdate: () => void,
     onZoom: (factor: number) => void,
     zoomFactor: number 
-}> = ({ onAddTab, onShowSettings, onShowDownloads, onZoom, zoomFactor }) => (
+}> = ({ onAddTab, onShowSettings, onShowDownloads, onCheckUpdate, onZoom, zoomFactor }) => (
     <motion.div initial={{ opacity: 0, scale: 0.98, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="nexus-chrome-menu">
-        <div className="menu-banner">Defina o Nexus como seu navegador padr\u00E3o</div>
+        <div className="menu-banner">Defina o Nexus como seu navegador padrão</div>
         <div className="menu-group">
             <div className="menu-item" onClick={onAddTab}><PlusCircle size={16} /> <span>Nova guia</span> <span className="shortcut">Ctrl+T</span></div>
             <div className="menu-item"><Plus size={16} /> <span>Nova janela</span> <span className="shortcut">Ctrl+N</span></div>
@@ -177,7 +179,8 @@ const ChromeMenu: React.FC<{
         </div>
         <div className="menu-divider" />
         <div className="menu-group">
-            <div className="menu-item" onClick={onShowSettings}><Settings size={16} /> <span>Configura\u00C7\u00F5es</span></div>
+            <div className="menu-item" onClick={onCheckUpdate}><Zap size={16} /> <span>Verificar atualizações</span></div>
+            <div className="menu-item" onClick={onShowSettings}><Settings size={16} /> <span>Configurações</span></div>
             <div className="menu-item" onClick={() => window.close()}><LogOut size={16} /> <span>Sair</span></div>
         </div>
     </motion.div>
@@ -216,7 +219,7 @@ const DownloadsPage: React.FC<{
                                     <span className="dl-perc">{Math.round((dl.received / dl.total) * 100)}%</span>
                                 </div>
                             )}
-                            <span className={`dl-state ${dl.state}`}>{dl.state === 'completed' ? 'Conclu\u00C3\u00ADdo' : dl.state === 'progressing' ? 'Baixando...' : 'Falhou'}</span>
+                            <span className={`dl-state ${dl.state}`}>{dl.state === 'completed' ? 'Concluído' : dl.state === 'progressing' ? 'Baixando...' : 'Falhou'}</span>
                         </div>
                         {dl.state === 'completed' && <ExternalLink size={16} className="open-icon" />}
                     </div>
@@ -406,7 +409,7 @@ const App: React.FC = () => {
                     <div className="user-avatar-stub">VH</div>
                     <button className="toolbar-btn" onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}><MenuIcon size={18} /></button>
                 </div>
-                <AnimatePresence>{showMenu && <ChromeMenu onAddTab={addTab} onShowSettings={() => setShowSettings(true)} onShowDownloads={() => setShowDownloads(true)} onZoom={(f) => setZoomFactor(prev => prev + f)} zoomFactor={zoomFactor} />}</AnimatePresence>
+                <AnimatePresence>{showMenu && <ChromeMenu onAddTab={addTab} onShowSettings={() => setShowSettings(true)} onShowDownloads={() => setShowDownloads(true)} onCheckUpdate={() => window.nexusAPI.checkForUpdates()} onZoom={(f) => setZoomFactor(prev => prev + f)} zoomFactor={zoomFactor} />}</AnimatePresence>
             </nav>
 
             <main className="browser-viewport">
@@ -434,7 +437,7 @@ const App: React.FC = () => {
                         </header>
                         <div className="sidebar-content">
                             <div className="appearance-card">
-                                <h3>Apar\u00EAncia</h3>
+                                <h3>Aparência</h3>
                                 <div className="browser-preview-stub" style={{ background: `linear-gradient(to bottom, ${browserAccent}33, #1e1e1e)` }}>
                                     <div className="preview-top-bar" style={{ background: browserAccent }}></div>
                                 </div>
@@ -448,7 +451,7 @@ const App: React.FC = () => {
                             <div className="color-grid">
                                 {['#00ccff', '#ff1b1b', '#00ff8c', '#ff00ff', '#ffd700', '#ffffff', '#444444', '#ff8400', '#0044ff', '#00ffcc', '#e1ff00', '#8800ff'].map(color => (
                                     <div key={color} className={`color-circle ${browserAccent === color ? 'active' : ''}`} onClick={() => setBrowserAccent(color)} style={{ backgroundColor: color }}>
-                                        {browserAccent === color && <div className="check-mark">\u2713</div>}
+                                        {browserAccent === color && <div className="check-mark">✓</div>}
                                     </div>
                                 ))}
                             </div>
