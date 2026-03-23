@@ -9,8 +9,8 @@ app.commandLine.appendSwitch('enable-zero-copy');
 app.commandLine.appendSwitch('ignore-gpu-blocklist');
 // 2. Otimização Agressiva de Memória (V8 Engine & Processos)
 app.commandLine.appendSwitch('enable-features', 'CanvasOopRasterization,Vulkan'); 
-app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,TranslateUI,BlinkGenPropertyTrees'); 
-app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512 --gc-global'); // Força o V8 a fazer faxina na RAM mais cedo
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,TranslateUI,BlinkGenPropertyTrees');
+// As otimizações de RAM agressivas (gc-global) foram removidas para privilegiar velocidade de CPU (Sem micro-stutters)
 app.commandLine.appendSwitch('renderer-process-limit', '15'); // Restringe a explosão de RAM compartilhando processos entre abas
 // 3. Suavidade de Tela e Navegação
 app.commandLine.appendSwitch('enable-smooth-scrolling');

@@ -15,12 +15,16 @@ async function setupShield(browserSession = session.defaultSession) {
     console.log("[SHIELD] Inicializando motor de AdBlock nativo tipo-Brave...");
     
     try {
-        // Inicializa o motor real do Ghostery/Cliqz usando as Listas de Filtro Globais + Privacidade
-        blockerInstance = await ElectronBlocker.fromLists(fetch, [
-            "https://easylist.to/easylist/easylist.txt",
-            "https://easylist.to/easylist/easyprivacy.txt",
-            "https://secure.fanboy.co.nz/fanboy-cookiemonster.txt" // Esconde os popups de Cookie
-        ]);
+        const fs = require('fs');
+        const path = require('path');
+        const { app } = require('electron');
+        
+        // Inicializa usando o motor pré-compilado (ultra rápido) e salva em cache binário no disco
+        blockerInstance = await ElectronBlocker.fromPrebuiltAdsAndTracking(fetch, {
+            path: path.join(app.getPath('userData'), 'shield-engine.bin'),
+            read: fs.promises.readFile,
+            write: fs.promises.writeFile,
+        });
         
         blockerInstance.on('request-blocked', () => {
             blockedCount++;
