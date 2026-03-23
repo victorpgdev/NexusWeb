@@ -11,6 +11,17 @@ import {
   Lock, 
   Menu as MenuIcon, 
   Home, 
+  ShieldCheck,
+  Download,
+  DownloadCloud,
+  FileText,
+  ExternalLink,
+  Zap,
+  History as HistoryIcon,
+  Star,
+  Trash2,
+  Terminal,
+  Clock,
   Search,
   Palette,
   Command,
@@ -18,13 +29,7 @@ import {
   Minus,
   LogOut,
   PlusCircle,
-  Edit2,
-  ShieldCheck,
-  Download,
-  DownloadCloud,
-  FileText,
-  ExternalLink,
-  Zap
+  Edit2
 } from 'lucide-react';
 
 /**
@@ -43,9 +48,19 @@ declare global {
       onUpdateReady: (cb: () => void) => void;
       applyUpdate: () => Promise<void>;
       checkForUpdates: () => Promise<any>;
+      getHistory: () => Promise<any[]>;
+      deleteHistoryItem: (idx: number) => Promise<boolean>;
+      clearHistory: () => Promise<boolean>;
+      getBookmarks: () => Promise<any[]>;
+      saveBookmark: (b: any) => Promise<boolean>;
+      deleteBookmark: (u: string) => Promise<boolean>;
+      toggleDevTools: () => void;
     };
   }
 }
+
+interface HistoryItem { url: string; title: string; time: string; }
+interface BookmarkItem { url: string; title: string; }
 
 interface DownloadItem {
   id: string;
@@ -156,30 +171,27 @@ const ChromeMenu: React.FC<{
     onAddTab: () => void, 
     onShowSettings: () => void,
     onShowDownloads: () => void,
+    onShowHistory: () => void,
+    onShowBookmarks: () => void,
     onCheckUpdate: () => void,
+    onDevTools: () => void,
     onZoom: (factor: number) => void,
     zoomFactor: number 
-}> = ({ onAddTab, onShowSettings, onShowDownloads, onCheckUpdate, onZoom, zoomFactor }) => (
+}> = ({ onAddTab, onShowSettings, onShowDownloads, onShowHistory, onShowBookmarks, onCheckUpdate, onDevTools, onZoom, zoomFactor }) => (
     <motion.div initial={{ opacity: 0, scale: 0.98, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="nexus-chrome-menu">
         <div className="menu-banner">Defina o Nexus como seu navegador padrão</div>
         <div className="menu-group">
             <div className="menu-item" onClick={onAddTab}><PlusCircle size={16} /> <span>Nova guia</span> <span className="shortcut">Ctrl+T</span></div>
             <div className="menu-item"><Plus size={16} /> <span>Nova janela</span> <span className="shortcut">Ctrl+N</span></div>
+            <div className="menu-divider" />
+            <div className="menu-item" onClick={onShowHistory}><HistoryIcon size={16} /> <span>Histórico</span> <span className="shortcut">Ctrl+H</span></div>
+            <div className="menu-item" onClick={onShowBookmarks}><Star size={16} /> <span>Favoritos</span> <span className="shortcut">Ctrl+Shift+B</span></div>
             <div className="menu-item" onClick={onShowDownloads}><Download size={16} /> <span>Downloads</span> <span className="shortcut">Ctrl+J</span></div>
-        </div>
-        <div className="menu-divider" />
-        <div className="menu-zoom-bar">
-            <span>Zoom</span>
-            <div className="zoom-ctrl">
-                <button onClick={() => onZoom(-0.1)}><Minus size={14} /></button>
-                <span className="zoom-val">{Math.round(zoomFactor * 100)}%</span>
-                <button onClick={() => onZoom(0.1)}><Plus size={14} /></button>
-            </div>
-            <Maximize size={16} />
         </div>
         <div className="menu-divider" />
         <div className="menu-group">
             <div className="menu-item" onClick={onCheckUpdate}><Zap size={16} /> <span>Verificar atualizações</span></div>
+            <div className="menu-item" onClick={onDevTools}><Terminal size={16} /> <span>Inspecionar elemento</span> <span className="shortcut">F12</span></div>
             <div className="menu-item" onClick={onShowSettings}><Settings size={16} /> <span>Configurações</span></div>
             <div className="menu-item" onClick={() => window.close()}><LogOut size={16} /> <span>Sair</span></div>
         </div>
@@ -229,6 +241,77 @@ const DownloadsPage: React.FC<{
     </div>
 );
 
+const HistoryPage: React.FC<{
+    history: HistoryItem[],
+    onDelete: (idx: number) => void,
+    onClear: () => void,
+    onNavigate: (url: string) => void,
+    onBack: () => void,
+    accent: string
+}> = ({ history, onDelete, onClear, onNavigate, onBack, accent }) => (
+    <div className="nexus-management-page">
+        <header className="mgmt-header">
+            <div className="header-left">
+                <HistoryIcon size={24} style={{ color: accent }} />
+                <h1>Histórico de Navegação</h1>
+            </div>
+            <div className="header-right">
+                {history.length > 0 && <button className="clear-btn" onClick={onClear}><Trash2 size={16} /> Limpar tudo</button>}
+                <button className="back-btn" onClick={onBack}><X size={20} /></button>
+            </div>
+        </header>
+        <div className="mgmt-list">
+            {history.length === 0 ? (
+                <div className="empty-state"><Clock size={48} /><p>Nenhum histórico encontrado</p></div>
+            ) : (
+                history.map((item, idx) => (
+                    <div key={idx} className="mgmt-item">
+                        <div className="item-main" onClick={() => onNavigate(item.url)}>
+                            <span className="item-title">{item.title}</span>
+                            <span className="item-url">{item.url}</span>
+                            <span className="item-time">{item.time}</span>
+                        </div>
+                        <button className="delete-btn" onClick={() => onDelete(idx)}><Trash2 size={16} /></button>
+                    </div>
+                ))
+            )}
+        </div>
+    </div>
+);
+
+const BookmarksPage: React.FC<{
+    bookmarks: BookmarkItem[],
+    onDelete: (url: string) => void,
+    onNavigate: (url: string) => void,
+    onBack: () => void,
+    accent: string
+}> = ({ bookmarks, onDelete, onNavigate, onBack, accent }) => (
+    <div className="nexus-management-page">
+        <header className="mgmt-header">
+            <div className="header-left">
+                <Star size={24} style={{ color: accent }} />
+                <h1>Favoritos</h1>
+            </div>
+            <button className="back-btn" onClick={onBack}><X size={20} /></button>
+        </header>
+        <div className="mgmt-list">
+            {bookmarks.length === 0 ? (
+                <div className="empty-state"><Star size={48} /><p>Você ainda não tem favoritos</p></div>
+            ) : (
+                bookmarks.map((bm, idx) => (
+                    <div key={idx} className="mgmt-item">
+                        <div className="item-main" onClick={() => onNavigate(bm.url)}>
+                            <span className="item-title">{bm.title}</span>
+                            <span className="item-url">{bm.url}</span>
+                        </div>
+                        <button className="delete-btn" onClick={() => onDelete(bm.url)}><Trash2 size={16} /></button>
+                    </div>
+                ))
+            )}
+        </div>
+    </div>
+);
+
 const App: React.FC = () => {
     const [tabs, setTabs] = useState<Tab[]>([{ id: '1', url: 'nexus:newtab', title: 'Nova Guia', isLoading: false, canGoBack: false, canGoForward: false, progress: 0 }]);
     const [activeTabId, setActiveTabId] = useState('1');
@@ -243,10 +326,26 @@ const App: React.FC = () => {
     const [downloads, setDownloads] = useState<DownloadItem[]>([]);
     const [showDownloads, setShowDownloads] = useState(false);
     const [isUpdateReady, setIsUpdateReady] = useState(false);
+    
+    // --- CHROMIUM DATA STATES ---
+    const [showHistory, setShowHistory] = useState(false);
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [showBookmarks, setShowBookmarks] = useState(false);
+    const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
 
     const SEARCH_ENGINE = 'google';
     const webviewRefs = useRef<Record<string, any>>({});
     const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+
+    const refreshHistory = async () => {
+        const items = await window.nexusAPI.getHistory();
+        setHistory(items || []);
+    };
+
+    const refreshBookmarks = async () => {
+        const items = await window.nexusAPI.getBookmarks();
+        setBookmarks(items || []);
+    };
 
     // Download & Update Listeners
     useEffect(() => {
@@ -260,6 +359,9 @@ const App: React.FC = () => {
         window.nexusAPI.onUpdateReady(() => {
             setIsUpdateReady(true);
         });
+        // Initial load
+        refreshHistory();
+        refreshBookmarks();
     }, []);
 
     useEffect(() => {
@@ -378,6 +480,17 @@ const App: React.FC = () => {
                           spellCheck="false" 
                           placeholder="Digite uma URL" 
                         />
+                        <button 
+                            type="button" 
+                            className="star-btn" 
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                window.nexusAPI.saveBookmark({ url: activeTab.url, title: activeTab.title }).then(() => refreshBookmarks());
+                            }}
+                            style={{ color: bookmarks.some(b => b.url === activeTab.url) ? browserAccent : '#9aa0a6' }}
+                        >
+                            <Star size={14} fill={bookmarks.some(b => b.url === activeTab.url) ? browserAccent : 'none'} />
+                        </button>
                     </form>
                     <AnimatePresence>
                       {showDropdown && <OmniboxDropdown query={inputValue} accent={browserAccent} onSelect={(q, e) => { setInputValue(q); handleNavigate(undefined, q, e); }} />}
@@ -409,12 +522,26 @@ const App: React.FC = () => {
                     <div className="user-avatar-stub">VH</div>
                     <button className="toolbar-btn" onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}><MenuIcon size={18} /></button>
                 </div>
-                <AnimatePresence>{showMenu && <ChromeMenu onAddTab={addTab} onShowSettings={() => setShowSettings(true)} onShowDownloads={() => setShowDownloads(true)} onCheckUpdate={() => window.nexusAPI.checkForUpdates()} onZoom={(f) => setZoomFactor(prev => prev + f)} zoomFactor={zoomFactor} />}</AnimatePresence>
+                <AnimatePresence>{showMenu && <ChromeMenu 
+                    onAddTab={addTab} 
+                    onShowSettings={() => { setShowSettings(true); setShowMenu(false); }} 
+                    onShowDownloads={() => { setShowDownloads(true); setShowMenu(false); }} 
+                    onShowHistory={() => { setShowHistory(true); setShowMenu(false); refreshHistory(); }}
+                    onShowBookmarks={() => { setShowBookmarks(true); setShowMenu(false); refreshBookmarks(); }}
+                    onCheckUpdate={() => { window.nexusAPI.checkForUpdates(); setShowMenu(false); }} 
+                    onDevTools={() => { window.nexusAPI.toggleDevTools(); setShowMenu(false); }}
+                    onZoom={(f) => setZoomFactor(prev => prev + f)} 
+                    zoomFactor={zoomFactor} 
+                />}</AnimatePresence>
             </nav>
 
             <main className="browser-viewport">
                 {showDownloads ? (
                     <DownloadsPage accent={browserAccent} downloads={downloads} onBack={() => setShowDownloads(false)} onOpen={(p) => window.nexusAPI.openDownload(p)} />
+                ) : showHistory ? (
+                    <HistoryPage accent={browserAccent} history={history} onBack={() => setShowHistory(false)} onNavigate={(u) => { setShowHistory(false); handleNavigate(undefined, u); }} onDelete={(idx) => window.nexusAPI.deleteHistoryItem(idx).then(() => refreshHistory())} onClear={() => window.nexusAPI.clearHistory().then(() => refreshHistory())} />
+                ) : showBookmarks ? (
+                    <BookmarksPage accent={browserAccent} bookmarks={bookmarks} onBack={() => setShowBookmarks(false)} onNavigate={(u) => { setShowBookmarks(false); handleNavigate(undefined, u); }} onDelete={(u) => window.nexusAPI.deleteBookmark(u).then(() => refreshBookmarks())} />
                 ) : (
                     tabs.map(tab => (
                         <div key={tab.id} style={{ display: tab.id === activeTabId ? 'block' : 'none', width: '100%', height: '100%' }}>

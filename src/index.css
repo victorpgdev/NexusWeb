@@ -705,3 +705,75 @@ body {
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 9. Management Pages (History, Bookmarks) */
+.nexus-management-page {
+    height: 100%;
+    padding: 40px;
+    background: #121212;
+    overflow-y: auto;
+    color: #e8eaed;
+}
+
+.mgmt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #3c4043;
+}
+
+.mgmt-header .header-left { display: flex; align-items: center; gap: 15px; }
+.mgmt-header h1 { font-size: 24px; font-weight: 500; }
+
+.header-right { display: flex; gap: 12px; }
+
+.clear-btn, .back-btn, .delete-btn {
+    background: #202124;
+    border: 1px solid #3c4043;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.2s;
+}
+
+.clear-btn:hover { background: #ea4335; border-color: #ea4335; }
+.back-btn:hover { background: #3c4043; }
+
+.mgmt-list { display: flex; flex-direction: column; gap: 10px; }
+
+.mgmt-item {
+    background: #1e1e1e;
+    border: 1px solid #3c4043;
+    border-radius: 12px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.mgmt-item:hover { border-color: var(--bg-accent); transform: translateX(5px); }
+
+.item-main { flex: 1; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.item-title { font-weight: 600; font-size: 15px; }
+.item-url { font-size: 13px; color: #9aa0a6; }
+.item-time { font-size: 11px; color: #5f6368; }
+
+.delete-btn { padding: 8px; color: #9aa0a6; border: none; background: none; }
+.delete-btn:hover { color: #ea4335; background: rgba(234, 67, 53, 0.1); }
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #5f6368;
+    gap: 20px;
+}

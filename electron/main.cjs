@@ -172,6 +172,22 @@ process.on('uncaughtException', (error) => {
     console.error("[NEXUS CORE CRASH PREVENTED] ", error);
 });
 
+// --- CHROMIUM CORE: AUTOMATIC HISTORY RECORDING ---
+app.on('web-contents-created', (event, contents) => {
+    if (contents.getType() === 'webview') {
+        contents.on('did-navigate', (event, url) => {
+            if (url.startsWith('http')) {
+                const db = require('./db.cjs');
+                db.addHistory({ 
+                    url, 
+                    title: contents.getTitle() || url, 
+                    time: new Date().toLocaleString() 
+                });
+            }
+        });
+    }
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });

@@ -33,4 +33,15 @@ contextBridge.exposeInMainWorld('nexusAPI', {
   onUpdateReady: (cb) => ipcRenderer.on('update-ready', () => cb()),
   applyUpdate: () => ipcRenderer.invoke('apply-update'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+
+  // --- CHROMIUM CORE: DATA & TOOLS ---
+  getHistory: () => ipcRenderer.invoke('db-get-history'),
+  deleteHistoryItem: (idx) => ipcRenderer.invoke('db-delete-history-item', idx),
+  clearHistory: () => ipcRenderer.invoke('db-clear-history'),
+  
+  getBookmarks: () => ipcRenderer.invoke('db-get-bookmarks'),
+  saveBookmark: (b) => ipcRenderer.invoke('db-save-bookmark', b),
+  deleteBookmark: (u) => ipcRenderer.invoke('db-delete-bookmark', u),
+
+  toggleDevTools: () => ipcRenderer.send('toggle-devtools'),
 });

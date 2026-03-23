@@ -54,11 +54,37 @@ function setupIPCAdapters() {
 
     // --- SISTEMA DE ACESSO AO DB (#11) ---
     ipcMain.handle('db-get-history', async () => db.get('history'));
+    ipcMain.handle('db-clear-history', async () => {
+        db.set('history', []);
+        return true;
+    });
+    ipcMain.handle('db-delete-history-item', async (event, index) => {
+        const history = db.get('history');
+        history.splice(index, 1);
+        db.set('history', history);
+        return true;
+    });
+
+    ipcMain.handle('db-get-bookmarks', async () => db.get('bookmarks'));
     ipcMain.handle('db-save-bookmark', async (event, bookmark) => {
         const bookmarks = db.get('bookmarks');
+        // Check duplication
+        if (bookmarks.some(b => b.url === bookmark.url)) return false;
         bookmarks.push(bookmark);
         db.set('bookmarks', bookmarks);
         return true;
+    });
+    ipcMain.handle('db-delete-bookmark', async (event, url) => {
+        const bookmarks = db.get('bookmarks');
+        const filtered = bookmarks.filter(b => b.url !== url);
+        db.set('bookmarks', filtered);
+        return true;
+    });
+
+    // --- CHROMIUM: DEVTOOLS (#Chromium) ---
+    ipcMain.on('toggle-devtools', (event) => {
+        const win = event.sender.getOwnerBrowserWindow();
+        if (win) win.webContents.toggleDevTools();
     });
 
 }
