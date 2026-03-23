@@ -11,12 +11,6 @@ import {
   Lock, 
   Menu as MenuIcon, 
   Home, 
-  ShieldCheck,
-  Download,
-  DownloadCloud,
-  FileText,
-  ExternalLink,
-  Zap,
   History as HistoryIcon,
   Star,
   Trash2,
@@ -25,11 +19,18 @@ import {
   Search,
   Palette,
   Command,
-  Maximize,
-  Minus,
   LogOut,
   PlusCircle,
-  Edit2
+  Edit2,
+  Activity,
+  Zap,
+  Minus,
+  Info,
+  ShieldCheck,
+  Download,
+  DownloadCloud,
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 
 /**
@@ -54,6 +55,7 @@ declare global {
       getBookmarks: () => Promise<any[]>;
       saveBookmark: (b: any) => Promise<boolean>;
       deleteBookmark: (u: string) => Promise<boolean>;
+      getAppMetrics: () => Promise<any[]>;
       toggleDevTools: () => void;
     };
   }
@@ -189,6 +191,15 @@ const ChromeMenu: React.FC<{
             <div className="menu-item" onClick={onShowDownloads}><Download size={16} /> <span>Downloads</span> <span className="shortcut">Ctrl+J</span></div>
         </div>
         <div className="menu-divider" />
+        <div className="menu-zoom-bar">
+            <span>Zoom</span>
+            <div className="zoom-ctrl">
+                <button onClick={() => onZoom(-0.1)}><Minus size={14} /></button>
+                <span className="zoom-val">{Math.round(zoomFactor * 100)}%</span>
+                <button onClick={() => onZoom(0.1)}><Plus size={14} /></button>
+            </div>
+        </div>
+        <div className="menu-divider" />
         <div className="menu-group">
             <div className="menu-item" onClick={onCheckUpdate}><Zap size={16} /> <span>Verificar atualizações</span></div>
             <div className="menu-item" onClick={onDevTools}><Terminal size={16} /> <span>Inspecionar elemento</span> <span className="shortcut">F12</span></div>
@@ -279,6 +290,69 @@ const HistoryPage: React.FC<{
     </div>
 );
 
+const TaskManagerPage: React.FC<{
+  metrics: any[],
+  onClose: () => void,
+  accent: string
+}> = ({ metrics, onClose, accent }) => (
+  <div className="nexus-management-page task-manager">
+    <header className="mgmt-header">
+      <div className="header-left">
+        <Activity size={24} style={{ color: accent }} />
+        <h1>Gerenciador de Tarefas do Nexus</h1>
+      </div>
+      <button className="back-btn" onClick={onClose}><X size={20} /></button>
+    </header>
+    <div className="task-grid">
+      <table className="task-table">
+        <thead>
+          <tr>
+            <th>Processo</th>
+            <th>ID</th>
+            <th>Memória (MB)</th>
+            <th>CPU (%)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metrics.map((m, i) => (
+            <tr key={i}>
+              <td><div className="process-type-tag" style={{ borderLeft: `3px solid ${accent}` }}>{m.type}</div></td>
+              <td>{m.pid}</td>
+              <td>{Math.round(m.memory.workingSetSize / 1024 / 1024)} MB</td>
+              <td>{m.cpu?.percentCPUUsage || 0}%</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+const DiagnosticsPage: React.FC<{
+  onClose: () => void,
+  accent: string
+}> = ({ onClose, accent }) => (
+  <div className="nexus-management-page diagnostics">
+    <header className="mgmt-header">
+      <div className="header-left">
+        <Info size={24} style={{ color: accent }} />
+        <h1>Sobre o Nexus (Infra Version)</h1>
+      </div>
+      <button className="back-btn" onClick={onClose}><X size={20} /></button>
+    </header>
+    <div className="diag-content">
+      <div className="version-info-box">
+        <div className="v-row"><span>Versão do Nexus:</span> <span>1.4.0 (Infra)</span></div>
+        <div className="v-row"><span>Chromium Engine:</span> <span>112.0.5615.165</span></div>
+        <div className="v-row"><span>Node.js Runtime:</span> <span>18.15.0</span></div>
+        <div className="v-row"><span>Data do Build:</span> <span>Março 2026</span></div>
+        <div className="v-row"><span>Status do Sandbox:</span> <span style={{ color: '#00ffaa' }}>Protegido (Active)</span></div>
+      </div>
+      <p className="legal-stub">Este navegador utiliza a base open-source do Chromium para fornecer uma experiência de navegação segura e de alto desempenho.</p>
+    </div>
+  </div>
+);
+
 const BookmarksPage: React.FC<{
     bookmarks: BookmarkItem[],
     onDelete: (url: string) => void,
@@ -332,6 +406,11 @@ const App: React.FC = () => {
     const [history, setHistory] = useState<HistoryItem[]>([]);
     const [showBookmarks, setShowBookmarks] = useState(false);
     const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+    
+    // --- INFRA STATES ---
+    const [showTasks, setShowTasks] = useState(false);
+    const [taskMetrics, setTaskMetrics] = useState<any[]>([]);
+    const [showDiagnostics, setShowDiagnostics] = useState(false);
 
     const SEARCH_ENGINE = 'google';
     const webviewRefs = useRef<Record<string, any>>({});
@@ -382,10 +461,10 @@ const App: React.FC = () => {
     useEffect(() => {
         if (activeTab && activeTab.url !== 'nexus:newtab' && activeTab.url !== inputValue) {
             setInputValue(activeTab.url);
-        } else if (activeTab && activeTab.url === 'nexus:newtab' && !showDropdown) {
+        } else if (activeTab && activeTab.url === 'nexus:newtab' && !showDropdown && !showTasks && !showDiagnostics && !showHistory && !showBookmarks && !showDownloads) {
             setInputValue('');
         }
-    }, [activeTabId, activeTab, showDropdown, inputValue]);
+    }, [activeTabId, activeTab, showDropdown, inputValue, showTasks, showDiagnostics, showHistory, showBookmarks, showDownloads]);
 
     const handleNavigate = async (e?: React.FormEvent, customQuery?: string, customEngine?: string) => {
         if (e) e.preventDefault();
@@ -394,12 +473,35 @@ const App: React.FC = () => {
         setShowDropdown(false);
         try {
             const result = await window.nexusAPI.resolveNavigation(query, customEngine || SEARCH_ENGINE);
+            
+            // #Chromium: Internal URL Routing
+            if (result.action === 'internal') {
+              if (result.url === 'nexus://tasks') setShowTasks(true);
+              if (result.url === 'nexus://history') setShowHistory(true);
+              if (result.url === 'nexus://bookmarks') setShowBookmarks(true);
+              if (result.url === 'nexus://version') setShowDiagnostics(true);
+              if (result.url === 'nexus://downloads') setShowDownloads(true);
+              setInputValue(result.url);
+              return;
+            }
+
             if (result && result.url) {
                 updateTab(activeTabId, { url: result.url, title: 'Carregando...' });
                 setTimeout(() => { webviewRefs.current[activeTabId]?.loadURL(result.url); }, 10);
             }
         } catch (err) { console.error(err); }
     };
+    
+    // Task Monitor Loop
+    useEffect(() => {
+      if (showTasks) {
+        const interval = setInterval(async () => {
+          const m = await window.nexusAPI.getAppMetrics();
+          setTaskMetrics(m);
+        }, 2000);
+        return () => clearInterval(interval);
+      }
+    }, [showTasks]);
 
     const addTab = () => {
         const id = Math.random().toString(36).substr(2, 9);
@@ -538,6 +640,10 @@ const App: React.FC = () => {
             <main className="browser-viewport">
                 {showDownloads ? (
                     <DownloadsPage accent={browserAccent} downloads={downloads} onBack={() => setShowDownloads(false)} onOpen={(p) => window.nexusAPI.openDownload(p)} />
+                ) : showTasks ? (
+                    <TaskManagerPage accent={browserAccent} metrics={taskMetrics} onClose={() => setShowTasks(false)} />
+                ) : showDiagnostics ? (
+                   <DiagnosticsPage accent={browserAccent} onClose={() => setShowDiagnostics(false)} />
                 ) : showHistory ? (
                     <HistoryPage accent={browserAccent} history={history} onBack={() => setShowHistory(false)} onNavigate={(u) => { setShowHistory(false); handleNavigate(undefined, u); }} onDelete={(idx) => window.nexusAPI.deleteHistoryItem(idx).then(() => refreshHistory())} onClear={() => window.nexusAPI.clearHistory().then(() => refreshHistory())} />
                 ) : showBookmarks ? (

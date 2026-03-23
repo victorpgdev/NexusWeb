@@ -777,3 +777,22 @@ body {
     color: #5f6368;
     gap: 20px;
 }
+
+/* 10. Task Manager & Diagnostics */
+.task-grid { margin-top: 20px; background: #1e1e1e; border-radius: 12px; border: 1px solid #3c4043; overflow: hidden; }
+.task-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+.task-table th { background: #202124; padding: 12px 20px; color: #9aa0a6; font-weight: 500; border-bottom: 1px solid #3c4043; }
+.task-table td { padding: 12px 20px; border-bottom: 1px solid #2a2a2a; }
+.task-table tr:last-child td { border-bottom: none; }
+.task-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+
+.process-type-tag { font-weight: 600; padding-left: 10px; text-transform: capitalize; }
+
+.diag-content { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+.version-info-box { background: #1e1e1e; border: 1px solid #3c4043; border-radius: 16px; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+.v-row { display: flex; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid #2a2a2a; }
+.v-row:last-child { border-bottom: none; }
+.v-row span:first-child { color: #9aa0a6; }
+.v-row span:last-child { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+
+.legal-stub { font-size: 13px; color: #5f6368; line-height: 1.6; text-align: center; }

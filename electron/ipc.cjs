@@ -1,32 +1,55 @@
-const { ipcMain, shell } = require('electron');
+const { ipcMain, shell, app } = require('electron');
 const db = require('./db.cjs');
 
 /**
  * MEDIADOR DE COMUNICA\u00C7\u00C3O (IPC)
  * 1. Processamento de Barra de Navega\u00C7\u00C3o (#7)
  * 2. Integra\u00C7\u00C3o de servi\u00C7os de IA (#4)
- * 3. Gest\u00C3o de Sincroniza\u00C7\u00C3o (#5)
+ * 1. Processamento de Barra de Navega\u00C7\u00C3O (#7)
+ * 2. Integra\u00C7\u00C3O de servi\u00C7os de IA (#4)
+ * 3. Gest\u00C3O de Sincroniza\u00C7\u00C3O (#5)
  * 4. Tratamento de Erros Global (#12)
  */
 
 function setupIPCAdapters() {
     
-    // --- NAVEGA\u00C7\u00C3O INTELIGENTE (#7) ---
-    ipcMain.handle('resolve-navigation', async (event, query) => {
-        const q = query.trim();
-        if (!q) return null;
+        // --- DOWNLOAD ACTIONS ---
+        ipcMain.handle('open-file', (event, path) => {
+            if (path) shell.openPath(path);
+        });
 
-        // Validar URL (Regex simplificada conforme #7)
-        const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-        if (urlRegex.test(q)) {
-            let finalUrl = q;
-            if (!q.startsWith('http')) finalUrl = 'https://' + q;
-            return { action: 'navigate', url: finalUrl };
-        } else {
-            // #7: Texto puro -> Pesquisa Google (ou Brave Search se preferido)
-            return { action: 'search', url: `https://www.google.com/search?q=${encodeURIComponent(q)}` };
-        }
-    });
+        // --- INFRA: PROCESS METRICS (Chromium Style) ---
+        ipcMain.handle('get-process-metrics', async () => {
+            return app.getAppMetrics();
+        });
+
+        // --- NAVEGAÇÃO INTELIGENTE (#7) ---
+        ipcMain.handle('resolve-navigation', async (event, query, engine) => {
+            const q = query.trim();
+            if (!q) return null;
+
+            // #Chromium: Internal URLs support (nexus://)
+            if (q.startsWith('nexus://')) {
+                return { action: 'internal', url: q };
+            }
+
+            // Validar URL (Regex simplificada conforme #7)
+            const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+            if (urlRegex.test(q)) {
+                let finalUrl = q;
+                if (!q.startsWith('http')) finalUrl = 'https://' + q;
+                return { action: 'navigate', url: finalUrl };
+            } else {
+                // #7: Texto puro -> Pesquisa
+                const searchEngines = {
+                    google: 'https://www.google.com/search?q=',
+                    brave: 'https://search.brave.com/search?q=',
+                    bing: 'https://www.bing.com/search?q='
+                };
+                const baseUrl = searchEngines[engine] || searchEngines.google;
+                return { action: 'search', url: baseUrl + encodeURIComponent(q) };
+            }
+        });
 
     // --- RECOMPENSAS (#6) ---
     ipcMain.handle('get-rewards', async () => db.get('rewards'));

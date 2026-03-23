@@ -43,5 +43,6 @@ contextBridge.exposeInMainWorld('nexusAPI', {
   saveBookmark: (b) => ipcRenderer.invoke('db-save-bookmark', b),
   deleteBookmark: (u) => ipcRenderer.invoke('db-delete-bookmark', u),
 
+  getAppMetrics: () => ipcRenderer.invoke('get-process-metrics'),
   toggleDevTools: () => ipcRenderer.send('toggle-devtools'),
 });
